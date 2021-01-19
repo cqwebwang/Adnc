@@ -1,67 +1,55 @@
 {
   "GlobalConfiguration": {
-    "BaseUrl": "http://172.16.0.4:8888"
+    "BaseUrl": "http://gateway.dev142.lol580.com",
+    "ServiceDiscoveryProvider": {
+      "Scheme": "http",
+      "Host": "172.24.241.93",
+      "Port": 8550,
+      "Type": "Consul"
+    }
   },
   "Routes": [
     {
-      "DownstreamPathTemplate": "/usr{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "172.16.0.4",
-          "Port": 9999
-        }
-      ],
       "UpstreamPathTemplate": "/usr{everything}",
       "UpstreamHttpMethod": [
         "Get",
         "Put",
         "Post",
-        "Delete",
-        "Options"
+        "Delete"
       ],
+      "DownstreamScheme": "http",
+      "DownstreamPathTemplate": "/usr{everything}",
+      "ServiceName": "adnc.usr.webapi",
       "LoadBalancerOptions": {
         "Type": "RoundRobin"
       }
     },
     {
-      "DownstreamPathTemplate": "/maint{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "172.16.0.4",
-          "Port": 9999
-        }
-      ],
       "UpstreamPathTemplate": "/maint{everything}",
       "UpstreamHttpMethod": [
         "Get",
         "Put",
         "Post",
-        "Delete",
-        "Options"
+        "Delete"
       ],
+      "DownstreamScheme": "http",
+      "DownstreamPathTemplate": "/maint{everything}",
+      "ServiceName": "adnc.maint.webapi",
       "LoadBalancerOptions": {
         "Type": "RoundRobin"
       }
     },
     {
-      "DownstreamPathTemplate": "/cus{everything}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "172.16.0.4",
-          "Port": 9999
-        }
-      ],
       "UpstreamPathTemplate": "/cus{everything}",
       "UpstreamHttpMethod": [
         "Get",
         "Put",
         "Post",
-        "Delete",
-        "Options"
+        "Delete"
       ],
+      "DownstreamScheme": "http",
+      "DownstreamPathTemplate": "/cus{everything}",
+      "ServiceName": "adnc.cus.webapi",
       "LoadBalancerOptions": {
         "Type": "RoundRobin"
       }

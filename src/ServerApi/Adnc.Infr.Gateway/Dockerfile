@@ -5,18 +5,13 @@ WORKDIR /publish
  #暴露80端口
 ENV ASPNETCORE_URLS=http://*:80
 EXPOSE 80
-#设置ASPNETCORE_ENVIRONMENT
+
 ENV ASPNETCORE_ENVIRONMENT production
-#配置本服务在skywalking名称
-ENV SKYWALKING__SERVICENAME=adnc-cus-webapi
-#skywalking接管的意思，除了adnc_health不需要配置，其他4个必须配置
+# ENV SKYWALKING__SERVICENAME=adnc-gateway
 ENV ASPNETCORE_HOSTINGSTARTUPASSEMBLIES=SkyAPM.Agent.AspNetCore
-#设置时区为东八区
 ENV TZ Asia/Shanghai
-ENTRYPOINT ["dotnet", "Adnc.Cus.WebApi.dll"]
+ENTRYPOINT ["dotnet", "Adnc.Infr.Gateway.dll"]
  
  
- 
- 
-# server_port@7030@
- 
+# server_port@8888@
+VOLUME ["/wydata/gateway/Config","/publish/Config"]

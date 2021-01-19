@@ -22,8 +22,8 @@ namespace Adnc.UnitTest.Fixtures
         {
             var containerBuilder = new ContainerBuilder();
             //maxscale连接地址
-            //var dbstring = "Server=193.112.75.77;Port=14006;database=adnc_cus;uid=adnc;pwd=123abc;";
-            var dbstring = "server=193.112.75.77;port=14006;user=adnc;password=123abc;database=adnc_cus";
+            //var dbstring = "Server=59.110.49.142;Port=14006;database=adnc_cus;uid=adnc;pwd=123abc;";
+            var dbstring = "server=59.110.49.142;port=14006;user=adnc;password=123abc;database=adnc_cus";
 
             //注册操作用户
             containerBuilder.RegisterType<UserContext>()

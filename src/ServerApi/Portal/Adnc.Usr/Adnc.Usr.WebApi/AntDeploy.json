@@ -1,0 +1,89 @@
+﻿{
+  "Env": [
+    {
+      "Name": "微服务",
+      "ServerList": [],
+      "LinuxServerList": [
+        {
+          "UserName": "root",
+          "Pwd": "7E3FE538E999B2C29E7336A20CBF0EDC11EC2C7D806D898D06F0B7EAB184BC51",
+          "Host": "59.110.49.142",
+          "NickName": "142",
+          "IIsFireUrl": null,
+          "DockerFireUrl": "",
+          "WindowsServiceFireUrl": null,
+          "LinuxServiceFireUrl": null
+        }
+      ],
+      "IgnoreList": [],
+      "WindowsBackUpIgnoreList": []
+    }
+  ],
+  "IIsConfig": {
+    "SdkType": null,
+    "WebSiteName": "",
+    "LastEnvName": null,
+    "EnvPairList": [
+      {
+        "EnvName": "微服务",
+        "ConfigName": "",
+        "LinuxEnvParam": null,
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null,
+        "DockerOther": null
+      }
+    ]
+  },
+  "WindowsServiveConfig": {
+    "ServiceName": "",
+    "SdkType": null,
+    "LastEnvName": null,
+    "EnvPairList": [
+      {
+        "EnvName": "微服务",
+        "ConfigName": "",
+        "LinuxEnvParam": null,
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null,
+        "DockerOther": null
+      }
+    ]
+  },
+  "LinuxServiveConfig": {
+    "ServiceName": "",
+    "EnvParam": "",
+    "LastEnvName": null,
+    "EnvPairList": [
+      {
+        "EnvName": "微服务",
+        "ConfigName": "",
+        "LinuxEnvParam": null,
+        "DockerPort": null,
+        "DockerEnvName": null,
+        "DockerVolume": null,
+        "DockerOther": null
+      }
+    ]
+  },
+  "DockerConfig": {
+    "Prot": "7010:80",
+    "AspNetCoreEnv": "",
+    "LastEnvName": "微服务",
+    "RemoveDaysFromPublished": "1",
+    "Volume": "",
+    "Other": "--name usr_api --env DOCKER_LISTEN_HOSTANDPORT=http://172.24.241.93:7010",
+    "EnvPairList": [
+      {
+        "EnvName": "微服务",
+        "ConfigName": null,
+        "LinuxEnvParam": null,
+        "DockerPort": "7010:80",
+        "DockerEnvName": "",
+        "DockerVolume": "",
+        "DockerOther": "--name usr_api --env DOCKER_LISTEN_HOSTANDPORT=http://172.24.241.93:7010"
+      }
+    ]
+  }
+}

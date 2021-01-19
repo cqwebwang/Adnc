@@ -20,7 +20,7 @@ namespace Adnc.Gateway
             Host.CreateDefaultBuilder(args)
                             .ConfigureAppConfiguration((context, cb) =>
                             {
-                               //生产环境从consul配置中心读取配置
+                                //生产环境从consul配置中心读取配置
                                 var env = context.HostingEnvironment;
                                 if (env.IsProduction() || env.IsStaging())
                                 {
@@ -32,6 +32,7 @@ namespace Adnc.Gateway
                             .ConfigureAppConfiguration((hostingContext, config) =>
                             {
                                 var env = hostingContext.HostingEnvironment;
+                                Console.WriteLine(env.EnvironmentName);
                                 config.AddJsonFile($"{AppContext.BaseDirectory}/Config/ocelot.{env.EnvironmentName}.json", false, true);
                             })
                             .ConfigureWebHostDefaults(webBuilder =>

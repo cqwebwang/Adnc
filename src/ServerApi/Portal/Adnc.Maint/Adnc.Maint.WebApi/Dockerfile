@@ -1,32 +1,22 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+  FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+COPY . /publish
+WORKDIR /publish
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
-WORKDIR /app
+ #暴露80端口
+ENV ASPNETCORE_URLS=http://*:80
 EXPOSE 80
-
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
-WORKDIR /src
-COPY ["Portal/Adnc.Maint/Adnc.Maint.WebApi/Adnc.Maint.WebApi.csproj", "Portal/Adnc.Maint/Adnc.Maint.WebApi/"]
-COPY ["Adnc.Infr.Mongo/23.Adnc.Infr.Mongo.csproj", "Adnc.Infr.Mongo/"]
-COPY ["Adnc.Core.Shared/03.Adnc.Core.Shared.csproj", "Adnc.Core.Shared/"]
-COPY ["Adnc.Infr.Common/04.Adnc.Infr.Common.csproj", "Adnc.Infr.Common/"]
-COPY ["Adnc.Infr.EfCore/22.Adnc.Infr.EfCore.csproj", "Adnc.Infr.EfCore/"]
-COPY ["Adnc.Infr.Consul/20.Adnc.Infr.Consul.csproj", "Adnc.Infr.Consul/"]
-COPY ["Portal/Adnc.Maint/Adnc.Maint.Application/Adnc.Maint.Application.csproj", "Portal/Adnc.Maint/Adnc.Maint.Application/"]
-COPY ["Adnc.Infr.EasyCaching/21.Adnc.Infr.EasyCaching.csproj", "Adnc.Infr.EasyCaching/"]
-COPY ["Adnc.Application.Shared/02.Adnc.Application.Shared.csproj", "Adnc.Application.Shared/"]
-COPY ["Adnc.Infr.Mq/24.Adnc.Infr.Mq.csproj", "Adnc.Infr.Mq/"]
-COPY ["Portal/Adnc.Maint/Adnc.Maint.Core/Adnc.Maint.Core.csproj", "Portal/Adnc.Maint/Adnc.Maint.Core/"]
-COPY ["Adnc.WebApi.Shared/01.Adnc.WebApi.Shared.csproj", "Adnc.WebApi.Shared/"]
-RUN dotnet restore "Portal/Adnc.Maint/Adnc.Maint.WebApi/Adnc.Maint.WebApi.csproj"
-COPY . .
-WORKDIR "/src/Portal/Adnc.Maint/Adnc.Maint.WebApi"
-RUN dotnet build "Adnc.Maint.WebApi.csproj" -c Release -o /app/build
-
-FROM build AS publish
-RUN dotnet publish "Adnc.Maint.WebApi.csproj" -c Release -o /app/publish
-
-FROM base AS final
-WORKDIR /app
-COPY --from=publish /app/publish .
+#设置ASPNETCORE_ENVIRONMENT
+ENV ASPNETCORE_ENVIRONMENT production
+#配置本服务在skywalking名称
+ENV SKYWALKING__SERVICENAME=adnc-maint-webapi
+#skywalking接管的意思，除了adnc_health不需要配置，其他4个必须配置
+ENV ASPNETCORE_HOSTINGSTARTUPASSEMBLIES=SkyAPM.Agent.AspNetCore
+#设置时区为东八区
+ENV TZ Asia/Shanghai
 ENTRYPOINT ["dotnet", "Adnc.Maint.WebApi.dll"]
+ 
+ 
+ # server_port@7020@
+
+#VOLUME ["/wydata/gateway/Config","/publish/Config"]
+ 
