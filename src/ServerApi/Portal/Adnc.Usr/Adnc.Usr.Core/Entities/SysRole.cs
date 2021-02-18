@@ -12,7 +12,7 @@ namespace Adnc.Usr.Core.Entities
 	/// </summary>
 	[Table("SysRole")]
 	[Description("角色")]
-	public class SysRole : EfAuditEntity
+	public class SysRole : EfFullAuditEntity
 	{
 		[Column("DeptId")]
 		public long? DeptId { get; set; }
@@ -21,8 +21,8 @@ namespace Adnc.Usr.Core.Entities
 		[Column("Name")]
 		public string Name { get; set; }
 
-		[Column("Num")]
-		public int? Num { get; set; }
+		[Column("Ordinal")]
+		public int Ordinal { get; set; }
 
 		[Column("Pid")]
 		public long? PID { get; set; }

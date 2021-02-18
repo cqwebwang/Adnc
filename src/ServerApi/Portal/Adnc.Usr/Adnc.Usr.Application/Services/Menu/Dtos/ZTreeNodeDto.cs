@@ -1,7 +1,4 @@
 ﻿using Adnc.Application.Shared.Dtos;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Adnc.Usr.Application.Dtos
 {
@@ -10,15 +7,15 @@ namespace Adnc.Usr.Application.Dtos
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TData"></typeparam>
-    public class ZTreeNodeDto<TKey, TData> : BaseDto
+    public class ZTreeNodeDto<TKey, TData> : IDto
     {
         /// <summary>
-        /// 节点ID
+        /// 节点Id
         /// </summary>
-        public TKey ID { get; set; }
+        public TKey Id { get; set; }
 
         /// <summary>
-        /// 父节点ID
+        /// 父节点Id
         /// </summary>
         public TKey PID { get; set; }
 
@@ -47,7 +44,7 @@ namespace Adnc.Usr.Application.Dtos
             ZTreeNodeDto<TKey, TData> node = new ZTreeNodeDto<TKey, TData>
             {
                 Checked = true,
-                ID = default(TKey),
+                Id = default(TKey),
                 Name = "顶级",
                 Open = true,
                 PID =default(TKey)

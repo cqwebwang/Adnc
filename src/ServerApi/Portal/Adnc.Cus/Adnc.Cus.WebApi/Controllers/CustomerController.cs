@@ -9,8 +9,8 @@ using Adnc.Application.Shared.Dtos;
 using Adnc.Application.Shared.RpcServices;
 using Adnc.Cus.Application.Services;
 using Adnc.Cus.Application.Dtos;
-using Adnc.Cus.Application.RpcServices;
 using Adnc.WebApi.Shared;
+using Adnc.Application.Shared.RpcServices.Rtos;
 
 namespace Adnc.Cus.WebApi.Controllers
 {
@@ -40,11 +40,11 @@ namespace Adnc.Cus.WebApi.Controllers
         /// <summary>
         /// 注册
         /// </summary>
-        /// <param name="inputDto"><see cref="RegisterInputDto"/></param>
+        /// <param name="inputDto"><see cref="CustomerRegisterDto"/></param>
         /// <returns></returns>
         [HttpPost]
         //[Permission("customerRegister")]
-        public async Task<ActionResult<SimpleDto<string>>> Register([FromBody][NotNull] RegisterInputDto inputDto)
+        public async Task<ActionResult<SimpleDto<string>>> Register([FromBody][NotNull] CustomerRegisterDto inputDto)
         {
             return Result(await _cusService.Register(inputDto));
         }
@@ -57,7 +57,7 @@ namespace Adnc.Cus.WebApi.Controllers
         //[Permission("customerRecharge")]
         public async Task<ActionResult<SimpleDto<string>>> Recharge([FromRoute] string id, [FromBody] SimpleInputDto<decimal> inputDto)
         {
-            return Result(await _cusService.Recharge(new RechargeInputDto { ID = long.Parse(id), Amount = inputDto.Value }));
+            return Result(await _cusService.Recharge(new CustomerRechargeDto { ID = long.Parse(id), Amount = inputDto.Value }));
         }
 
         /// <summary>
@@ -74,17 +74,17 @@ namespace Adnc.Cus.WebApi.Controllers
 
         [HttpGet("testrpc")]
         [AllowAnonymous]
-        public async Task<ActionResult<GetDictReply>> TestCallRpcService()
+        public async Task<ActionResult<DictRto>> TestCallRpcService()
         {
             var jwtToken = await _contextAccessor.HttpContext.GetTokenAsync("access_token");
             if (jwtToken == null)
             {
-                var authRpcResult = await _authRpcServcie.Login(new LoginRequest { Account = "alpha2008", Password = "alpha2008" });
+                var authRpcResult = await _authRpcServcie.LoginAsync(new LoginRto { Account = "alpha2008", Password = "alpha2008" });
                 if (authRpcResult.IsSuccessStatusCode)
                     jwtToken = authRpcResult.Content.Token;
                 return NotFound();
             }
-            var dictRpcResult = await _maintRpcServcie.GetDict($"Bearer {jwtToken}", 29);
+            var dictRpcResult = await _maintRpcServcie.GetDictAsync(29);
             if (dictRpcResult.IsSuccessStatusCode)
                 return dictRpcResult.Content;
 

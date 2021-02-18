@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	  <TargetFramework>netcoreapp3.1</TargetFramework>
-	  <Version>0.6.0</Version>
+	  <Version>0.7.0</Version>
 	  <Authors>Alpha.Yu</Authors>
 	  <Product>Adnc</Product>
 	  <RepositoryUrl>https://github.com/AlphaYu</RepositoryUrl>
@@ -16,12 +16,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Migrations\20201123160847_20201123_01.cs" />
-    <Compile Remove="Migrations\20201123160847_20201123_01.Designer.cs" />
+    <Compile Remove="Migrations\20210208052540_2021020801.cs" />
+    <Compile Remove="Migrations\20210208052540_2021020801.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Adnc.Infr.EfCore\22.Adnc.Infr.EfCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>

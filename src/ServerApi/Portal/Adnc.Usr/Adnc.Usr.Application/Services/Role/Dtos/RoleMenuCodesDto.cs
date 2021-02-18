@@ -9,7 +9,7 @@ namespace Adnc.Usr.Application.Dtos
 	/// 角色，权限
 	/// </summary>
 	[Serializable]
-    public class RoleMenuCodesDto : BaseDto
+    public class RoleMenuCodesDto : IDto
     {
         /// <summary>
         /// 菜单Code
@@ -17,7 +17,7 @@ namespace Adnc.Usr.Application.Dtos
         public string Code { get; set; }
 
 		/// <summary>
-		/// 角色ID
+		/// 角色Id
 		/// </summary>
 		public long RoleId { get; set; }
 	}

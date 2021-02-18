@@ -11,7 +11,7 @@ namespace Adnc.Usr.Core.Entities
 	/// </summary>
 	[Table("SysUser")]
 	[Description("账号")]
-	public class SysUser : EfAuditEntity,ISoftDelete
+	public class SysUser : EfFullAuditEntity,ISoftDelete
 	{
 
 		//private SysDept _dept;
@@ -87,8 +87,8 @@ namespace Adnc.Usr.Core.Entities
 		/// </summary>
 		[Description("角色id列表，以逗号分隔")]
 		[StringLength(72)]
-		[Column("RoleId")]
-		public string RoleId { get; set; }
+		[Column("RoleIds")]
+		public string RoleIds { get; set; }
 
 		/// <summary>
 		/// 密码盐

@@ -11,6 +11,8 @@ using Adnc.Cus.Core.Entities;
 using Adnc.Core.Shared.IRepositories;
 using Adnc.Infr.Common;
 using Adnc.Infr.Common.Helper;
+using Adnc.Infr.EfCore;
+using System.Linq.Expressions;
 
 namespace Adnc.UnitTest
 {
@@ -22,6 +24,7 @@ namespace Adnc.UnitTest
         private readonly IEfRepository<Customer> _cusRsp;
         private readonly IEfRepository<CusFinance> _cusFinanceRsp;
         private readonly IEfRepository<CusTransactionLog> _cusLogsRsp;
+        private readonly AdncDbContext _dbContext;
 
         private EfCoreDbcontextFixture _fixture;
 
@@ -34,19 +37,61 @@ namespace Adnc.UnitTest
             _cusRsp = _fixture.Container.Resolve<IEfRepository<Customer>>();
             _cusFinanceRsp = _fixture.Container.Resolve<IEfRepository<CusFinance>>();
             _cusLogsRsp = _fixture.Container.Resolve<IEfRepository<CusTransactionLog>>();
+            _dbContext = _fixture.Container.Resolve<AdncDbContext>();
 
             Initialize().Wait();
         }
 
+        protected Expression<Func<TEntity, object>>[] UpdatingProps<TEntity>(params Expression<Func<TEntity, object>>[] expressions)
+        {
+            return expressions;
+        }
+
         private async Task Initialize()
         {
-            await _cusLogsRsp.DeleteRangeAsync(x => true);
-            await _cusFinanceRsp.DeleteRangeAsync(x => true);
-            await _cusRsp.DeleteRangeAsync(x => true);
+            //await _cusLogsRsp.DeleteRangeAsync(x => true);
+            //await _cusFinanceRsp.DeleteRangeAsync(x => true);
+            //await _cusRsp.DeleteRangeAsync(x => true);
 
-            _userContext.ID = 1600000000000;
+            _userContext.Id = 1600000000000;
             _userContext.Account = "alpha2008";
             _userContext.Name = "余小猫";
+
+            await Task.CompletedTask;
+        }
+
+        [Fact]
+        public async Task TestDbContext()
+        {
+
+            var account = "alpha008";
+
+            using (var db = await _dbContext.Database.BeginTransactionAsync())
+            {
+                //_unitOfWork.BeginTransaction();
+
+
+                await _cusRsp.DeleteRangeAsync(x => x.Id <= 10000);
+
+                var id = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
+                var customer = new Customer() { Id = id, Account = account, Nickname = "招财猫", Realname = "张发财" };
+
+                _dbContext.Add<Customer>(customer);
+
+                await _dbContext.SaveChangesAsync();
+
+
+                var id2 = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
+                var customer2 = new Customer() { Id = id2, Account = account, Nickname = "招财猫02", Realname = "张发财02" };
+
+                _dbContext.Add<Customer>(customer2);
+                //_unitOfWork.Commit();
+
+                await _dbContext.SaveChangesAsync();
+
+                await db.CommitAsync();
+            }
+
         }
 
         /// <summary>
@@ -59,9 +104,9 @@ namespace Adnc.UnitTest
             var id = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
             var id2 = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
             var account = "alpha008";
-            var customer = new Customer() { ID = id, Account = account, Nickname = "招财猫", Realname = "张发财" };
-            var customer2 = new Customer() { ID = id2, Account = account, Nickname = "招财猫02", Realname = "张发财02" };
-            var cusFinance = new CusFinance { Account = account, ID = id, Balance = 0 };
+            var customer = new Customer() { Id = id, Account = account, Nickname = "招财猫", Realname = "张发财" };
+            var customer2 = new Customer() { Id = id2, Account = account, Nickname = "招财猫02", Realname = "张发财02" };
+            var cusFinance = new CusFinance { Account = account, Id = id, Balance = 0 };
 
             var newNickName = "招财猫008";
             var newRealName = "张发财008";
@@ -77,15 +122,28 @@ namespace Adnc.UnitTest
 
                 //update single 
                 customer.Nickname = newNickName;
-                await _cusRsp.UpdateAsync(customer, c => c.Nickname);
+                await _cusRsp.UpdateAsync(customer,UpdatingProps<Customer>(c => c.Nickname));
+                var customerFromDb = await _cusRsp.FindAsync(customer.Id);
+                Assert.Equal(newNickName, customerFromDb.Nickname);
+                Assert.NotEqual(newRealName, customerFromDb.Realname);
+
+
                 cusFinance.Balance = newBalance;
-                await _cusFinanceRsp.UpdateAsync(cusFinance, c => c.Balance);
+                await _cusFinanceRsp.UpdateAsync(cusFinance, UpdatingProps<CusFinance>(c => c.Balance));
+                var financeFromDb = await _cusRsp.FetchAsync(c => c, x => x.Id == cusFinance.Id);
+                Assert.Equal(newBalance, cusFinance.Balance);
 
                 //update batchs         
-                await _cusRsp.UpdateRangeAsync(x => x.ID == id, c => new Customer { Realname = newRealName });
+                await _cusRsp.UpdateRangeAsync(x => x.Id == id, c => new Customer { Realname = newRealName, Nickname = newNickName });
 
                 //delete raw sql
                 await _cusRsp.DeleteAsync(id2);
+
+
+                await _cusLogsRsp.DeleteAsync(1000);
+
+                var cusTotal = await _cusRsp.CountAsync(x => x.Id == id || x.Id == id2);
+                Assert.Equal(1, cusTotal);
 
                 _unitOfWork.Commit();
             }
@@ -97,15 +155,6 @@ namespace Adnc.UnitTest
             {
                 _unitOfWork.Dispose();
             }
-
-            var cusTotal = await _cusRsp.CountAsync(x => x.ID == id || x.ID == id2);
-            Assert.Equal(1, cusTotal);
-
-            var customerFromDb = await _cusRsp.FindAsync(id);
-            var financeFromDb = await _cusRsp.FetchAsync(c => c, x => x.ID == id);
-            Assert.Equal(newBalance, cusFinance.Balance);
-            Assert.Equal(newNickName, customerFromDb.Nickname);
-            Assert.Equal(newRealName, customerFromDb.Realname);        
         }
 
         /// <summary>
@@ -118,9 +167,9 @@ namespace Adnc.UnitTest
             var id = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
             var id2 = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
             var account = "alpha008";
-            var customer = new Customer() { ID = id, Account = account, Nickname = "招财猫", Realname = "张发财" };
-            var customer2 = new Customer() { ID = id2, Account = account, Nickname = "招财猫02", Realname = "张发财02" };
-            var cusFinance = new CusFinance { Account = account, ID = id, Balance = 0 };
+            var customer = new Customer() { Id = id, Account = account, Nickname = "招财猫", Realname = "张发财" };
+            var customer2 = new Customer() { Id = id2, Account = account, Nickname = "招财猫02", Realname = "张发财02" };
+            var cusFinance = new CusFinance { Account = account, Id = id, Balance = 0 };
 
             var newNickName = "招财猫008";
             var newRealName = "张发财008";
@@ -136,12 +185,12 @@ namespace Adnc.UnitTest
 
                 //update single 
                 customer.Nickname = newNickName;
-                await _cusRsp.UpdateAsync(customer, c => c.Nickname);
+                await _cusRsp.UpdateAsync(customer,UpdatingProps<Customer>(c => c.Nickname));
                 cusFinance.Balance = newBalance;
-                await _cusFinanceRsp.UpdateAsync(cusFinance, c => c.Balance);
+                await _cusFinanceRsp.UpdateAsync(cusFinance, UpdatingProps<CusFinance>(c => c.Balance));
 
                 //update batchs         
-                await _cusRsp.UpdateRangeAsync(x => x.ID == id, c => new Customer { Realname = newRealName });
+                await _cusRsp.UpdateRangeAsync(x => x.Id == id, c => new Customer { Realname = newRealName });
 
                 //delete raw sql
                 await _cusRsp.DeleteAsync(id2);
@@ -159,11 +208,11 @@ namespace Adnc.UnitTest
                 _unitOfWork.Dispose();
             }
 
-            var cusTotal = await _cusRsp.CountAsync(x => x.ID == id || x.ID == id2);
+            var cusTotal = await _cusRsp.CountAsync(x => x.Id == id || x.Id == id2);
             Assert.Equal(0, cusTotal);
 
             var customerFromDb = await _cusRsp.FindAsync(id);
-            var financeFromDb = await _cusRsp.FetchAsync(c => c, x => x.ID == id);
+            var financeFromDb = await _cusRsp.FetchAsync(c => c, x => x.Id == id);
 
             Assert.Null(customerFromDb);
             Assert.Null(financeFromDb);
@@ -178,17 +227,17 @@ namespace Adnc.UnitTest
         {
             //single hard delete 
             var customer = await this.InsertCustomer();
-            var customerFromDb = await _cusRsp.FindAsync(customer.ID);
-            Assert.Equal(customer.ID, customerFromDb.ID);
-            
-            await _cusRsp.DeleteAsync(customer.ID);
+            var customerFromDb = await _cusRsp.FindAsync(customer.Id);
+            Assert.Equal(customer.Id, customerFromDb.Id);
+
+            await _cusRsp.DeleteAsync(customer.Id);
             var result = await _cusRsp.QueryAsync<Customer>("SELECT * FROM Customer WHERE ID=@ID", customer);
             Assert.Empty(result);
 
             //batch hand delete
             var cus1 = await this.InsertCustomer();
             var cus2 = await this.InsertCustomer();
-            var total = await _cusRsp.CountAsync(c => c.ID == cus1.ID || c.ID == cus2.ID);
+            var total = await _cusRsp.CountAsync(c => c.Id == cus1.Id || c.Id == cus2.Id);
             Assert.Equal(2, total);
             /*
             DELETE A
@@ -197,44 +246,76 @@ namespace Adnc.UnitTest
             FROM `Customer` AS `c`
             WHERE (`c`.`ID` = 122313039042187264) OR (`c`.`ID` = 122313039209959424) ) AS B ON A.`ID` = B.`ID`
              */
-            await _cusRsp.DeleteRangeAsync(c=> c.ID == cus1.ID || c.ID == cus2.ID);
+            await _cusRsp.DeleteRangeAsync(c => c.Id == cus1.Id || c.Id == cus2.Id);
             //SELECT * FROM Customer WHERE ID in (122314219994615808,122314220174970880)
-            var result2 = await _cusRsp.QueryAsync<Customer>("SELECT * FROM Customer WHERE ID in @ids", new { ids = new[] { cus1.ID, cus2.ID } });
+            var result2 = await _cusRsp.QueryAsync<Customer>("SELECT * FROM Customer WHERE ID in @ids", new { ids = new[] { cus1.Id, cus2.Id } });
             Assert.Empty(result2);
         }
 
-        
+
         [Fact]
         public async void TestUpdate()
         {
-            var newRealName = "测试用户";
-            var newNickname = "测试";
-            long id = 0;
 
             try
-            {
-                _unitOfWork.BeginTransaction();
+            {  
+                long id = 0;
 
-                var result = await InsertCustomer();
-                id = result.ID;
+                //using (dynamic trans = _unitOfWork.GetDbContextTransaction())
+                //{
+                var insertedCustomer = await InsertCustomer();
+                id = insertedCustomer.Id;
 
-                await _cusRsp.UpdateAsync(new Customer { ID = result.ID, Realname = newRealName, Nickname = newNickname }, c => c.Realname, c => c.Nickname);
+                //实体已经被跟踪
+                insertedCustomer.Realname = "被跟踪";
+                //UPDATE `Customer` SET `ModifyBy` = 1600000000000, `ModifyTime` = timestamp('2021-02-05 23:14:05.326236'), `Realname` = '被跟踪' 
+                //WHERE `Id` = 145668356337438720;
+                await _cusRsp.UpdateAsync(insertedCustomer);
+                var newCus = await _cusRsp.FindAsync(id, writeDb: true);
+                Assert.Equal("被跟踪", newCus.Realname);
 
-                _unitOfWork.Commit();
+                //实体已经被跟踪并且指定更新列
+                insertedCustomer.Nickname = "跟踪指定列";
+                await _cusRsp.UpdateAsync(insertedCustomer, UpdatingProps<Customer>(c => c.Nickname));
+                newCus = await _cusRsp.FindAsync(id, writeDb: true);
+                Assert.Equal("跟踪指定列", newCus.Nickname);
+
+
+                //实体没有被跟踪，但dbcontext中已经有同Id实体
+                //UPDATE `Customer` SET `ModifyTime` = timestamp('2021-02-05 23:14:07.451520'), `Nickname` = '新昵称', `Realname` = '没被跟踪01'
+                //WHERE `Id` = 145668356337438720;
+                await _cusRsp.UpdateAsync(new Customer { Id = id, Realname = "没被跟踪01", Nickname = "新昵称" }, UpdatingProps<Customer>(c => c.Realname, c => c.Nickname));
+                newCus = await _cusRsp.FindAsync(id, writeDb: true);
+                Assert.Equal("没被跟踪01", newCus.Realname);
+                Assert.Equal("新昵称", newCus.Nickname);
+
+
+                //实体没有被跟踪
+                //UPDATE `Customer` SET `ModifyBy` = 1600000000000, `ModifyTime` = timestamp('2021-02-05 23:14:10.354529'), `Nickname` = '新昵称', `Realname` = '没被跟踪02'
+                //WHERE `Id` = 145649264331198464;
+                id = 145649264331198464;
+                await _cusRsp.UpdateAsync(new Customer { Id = id, Realname = "没被跟踪02", Nickname = "新昵称" }, UpdatingProps<Customer>(c => c.Realname, c => c.Nickname));
+                newCus = await _cusRsp.FindAsync(id, writeDb: true);
+                Assert.Equal("没被跟踪02", newCus.Realname);
+                Assert.Equal("新昵称", newCus.Nickname);
+
+                //实体没有被跟踪
+                //UPDATE `Customer` SET `ModifyTime` = timestamp('2021-02-05 23:30:37.133035'), `Realname` = '没被跟踪03'
+                //id = 145656816196521984;
+                newCus = await _cusRsp.FindAsync(id);
+                newCus.Realname = "没被跟踪03";
+                await _cusRsp.UpdateAsync(newCus, UpdatingProps<Customer>(c => c.Realname));
+                newCus = await _cusRsp.FindAsync(id, writeDb: true);
+                Assert.Equal("没被跟踪03", newCus.Realname);
+
+
+                //trans.Commit();
+                //}
             }
-            catch(Exception)
+            catch (Exception ex)
             {
-                _unitOfWork.Rollback();
+                throw new Exception(ex.Message, ex);
             }
-            finally
-            {
-                _unitOfWork.Dispose();
-            }
-
-
-            var newCus = await _cusRsp.FindAsync(id, writeDb: true);
-            Assert.Equal(newRealName, newCus.Realname);
-            Assert.Equal(newNickname, newCus.Nickname);
         }
 
         /// <summary>
@@ -244,7 +325,7 @@ namespace Adnc.UnitTest
         private async Task<Customer> InsertCustomer()
         {
             var id = IdGenerater.GetNextId(IdGenerater.DatacenterId, IdGenerater.WorkerId);
-            var customer = new Customer() { ID = id, Account = "alpha2008", Nickname = IdGenerater.GetNextId().ToString(), Realname = IdGenerater.GetNextId().ToString() };
+            var customer = new Customer() { Id = id, Account = "alpha2008", Nickname = IdGenerater.GetNextId().ToString(), Realname = IdGenerater.GetNextId().ToString() };
             await _cusRsp.InsertAsync(customer);
             return customer;
         }
@@ -256,7 +337,7 @@ namespace Adnc.UnitTest
         /// <returns></returns>
         private async Task<CusFinance> InsertCusFinance(long id)
         {
-            var cusFinance = new CusFinance { Account = "alpha2008", ID = id, Balance = 0 };
+            var cusFinance = new CusFinance { Account = "alpha2008", Id = id, Balance = 0 };
             await _cusFinanceRsp.InsertAsync(cusFinance);
             return cusFinance;
         }

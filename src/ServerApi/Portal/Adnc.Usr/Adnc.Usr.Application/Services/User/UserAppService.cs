@@ -9,7 +9,7 @@ using Adnc.Core.Shared.IRepositories;
 using Adnc.Infr.Common.Helper;
 using Adnc.Infr.Common.Extensions;
 using Adnc.Usr.Core.Entities;
-using Adnc.Usr.Core.CoreServices;
+using Adnc.Usr.Core.Services;
 using Adnc.Usr.Application.Dtos;
 using Adnc.Application.Shared.Dtos;
 using Adnc.Application.Shared.Services;
@@ -22,13 +22,13 @@ namespace Adnc.Usr.Application.Services
         private readonly IEfRepository<SysUser> _userRepository;
         private readonly IDeptAppService _deptAppService;
         private readonly IRoleAppService _roleAppService;
-        private readonly IUsrManagerService _usrManager;
+        private readonly UsrManager _usrManager;
 
         public UserAppService(IMapper mapper,
             IEfRepository<SysUser> userRepository,
             IDeptAppService deptAppService,
             IRoleAppService roleAppService,
-            IUsrManagerService usrManager)
+            UsrManager usrManager)
         {
             _mapper = mapper;
             _userRepository = userRepository;
@@ -37,103 +37,107 @@ namespace Adnc.Usr.Application.Services
             _usrManager = usrManager;
         }
 
-        public async Task<AppSrvResult> ChangeStatus(long Id, int status)
+        public async Task<AppSrvResult> ChangeStatusAsync(long id, int status)
         {
-            await _userRepository.UpdateAsync(new SysUser { ID = Id, Status = status }, x => x.Status);
-            return DefaultResult();
+            await _userRepository.UpdateAsync(new SysUser { Id = id, Status = status }, UpdatingProps<SysUser>(x => x.Status));
+            return AppSrvResult();
         }
 
-        public async Task<AppSrvResult> ChangeStatus(UserChangeStatusInputDto changeDto)
+        public async Task<AppSrvResult> ChangeStatusAsync(UserChangeStatusDto input)
         {
-            string userids = string.Join<long>(",", changeDto.UserIds);
-            await _userRepository.UpdateRangeAsync(u => userids.Contains(u.ID.ToString()), u => new SysUser { Status = changeDto.Status });
-            return DefaultResult();
+            string userids = string.Join<long>(",", input.UserIds);
+            await _userRepository.UpdateRangeAsync(u => userids.Contains(u.Id.ToString()), u => new SysUser { Status = input.Status });
+            return AppSrvResult();
         }
 
-        public async Task<AppSrvResult> Delete(long Id)
+        public async Task<AppSrvResult> DeleteAsync(long id)
         {
-            await _userRepository.DeleteAsync(Id);
-            return DefaultResult();
+            await _userRepository.DeleteAsync(id);
+            return AppSrvResult();
         }
 
-        public async Task<AppSrvResult<long>> Add(UserSaveInputDto saveDto)
+        public async Task<AppSrvResult<long>> CreateAsync(UserCreationDto input)
         {
-            if (await _userRepository.ExistAsync(x => x.Account == saveDto.Account))
+            if (await _userRepository.AnyAsync(x => x.Account == input.Account))
                 return Problem(HttpStatusCode.BadRequest, "账号已经存在");
 
-            var user = _mapper.Map<SysUser>(saveDto);
-            user.ID = IdGenerater.GetNextId();
+            var user = _mapper.Map<SysUser>(input);
+            user.Id = IdGenerater.GetNextId();
             user.Salt = SecurityHelper.GenerateRandomCode(5);
             user.Password = HashHelper.GetHashedString(HashType.MD5, user.Password, user.Salt);
-            await _usrManager.AddUser(user);
+            await _usrManager.CreateUserAsync(user);
 
-            return user.ID;
+            return user.Id;
         }
 
-        public async Task<AppSrvResult> Update(UserSaveInputDto saveDto)
+        public async Task<AppSrvResult> UpdateAsync(long id,UserUpdationDto input)
         {
-            var user = _mapper.Map<SysUser>(saveDto);
-            await _userRepository.UpdateAsync(user,
-                 x => x.Name,
-                 x => x.DeptId,
-                 x => x.Sex,
-                 x => x.Phone,
-                 x => x.Email,
-                 x => x.Birthday,
-                 x => x.Status);
+            var user = _mapper.Map<SysUser>(input);
 
-            return DefaultResult();
+            user.Id = id;
+
+            var updatingProps = UpdatingProps<SysUser>(x => x.Name,
+                                                       x => x.DeptId,
+                                                       x => x.Sex,
+                                                       x => x.Phone,
+                                                       x => x.Email,
+                                                       x => x.Birthday,
+                                                       x => x.Status
+                                                      );
+            await _userRepository.UpdateAsync(user, updatingProps);
+
+            return AppSrvResult();
         }
 
-        public async Task<AppSrvResult<PageModelDto<UserDto>>> GetPaged(UserSearchDto searchDto)
+        public async Task<AppSrvResult<PageModelDto<UserDto>>> GetPagedAsync(UserSearchPagedDto search)
         {
             Expression<Func<SysUser, bool>> whereCondition = x => true;
-            if (searchDto.Account.IsNotNullOrWhiteSpace())
+            if (search.Account.IsNotNullOrWhiteSpace())
             {
-                whereCondition = whereCondition.And(x => x.Account.Contains(searchDto.Account));
+                whereCondition = whereCondition.And(x => x.Account.Contains(search.Account));
             }
 
-            if (searchDto.Name.IsNotNullOrWhiteSpace())
+            if (search.Name.IsNotNullOrWhiteSpace())
             {
-                whereCondition = whereCondition.And(x => x.Name.Contains(searchDto.Name));
+                whereCondition = whereCondition.And(x => x.Name.Contains(search.Name));
             }
 
-            var pagedModel = await _userRepository.PagedAsync(searchDto.PageIndex, searchDto.PageSize, whereCondition, x => x.ID, false);
+            var pagedModel = await _userRepository.PagedAsync(search.PageIndex, search.PageSize, whereCondition, x => x.Id, false);
             var pageModelDto = _mapper.Map<PageModelDto<UserDto>>(pagedModel);
 
-            pageModelDto.XData = await _deptAppService.GetSimpleList();
+            pageModelDto.XData = await _deptAppService.GetSimpleListAsync();
 
-            if (pageModelDto.Count > 0)
+            if (pageModelDto.RowsCount > 0)
             {
                 var deptIds = pageModelDto.Data.Where(d => d.DeptId != null).Select(d => d.DeptId).Distinct().ToList();
-                //var depts = await _deptRepository.SelectAsync(d => new { d.ID, d.FullName }, x => deptIds.Contains(x.ID));
-                var depts = (await _deptAppService.GetAllFromCache())
-                            .Where(x => deptIds.Contains(x.ID))
-                            .Select(d => new { d.ID, d.FullName });
-                //var roles = await _roleRepository.SelectAsync(r => new { r.ID, r.Name }, x => true);
-                var roles = (await _roleAppService.GetAllFromCache())
-                            .Select(r => new { r.ID, r.Name });
+                //var depts = await _deptRepository.SelectAsync(d => new { d.Id, d.FullName }, x => deptIds.Contains(x.Id));
+                var depts = (await _deptAppService.GetAllFromCacheAsync())
+                            .Where(x => deptIds.Contains(x.Id))
+                            .Select(d => new { d.Id, d.FullName });
+                //var roles = await _roleRepository.SelectAsync(r => new { r.Id, r.Name }, x => true);
+                var roles = (await _roleAppService.GetAllFromCacheAsync())
+                            .Select(r => new { r.Id, r.Name });
 
                 foreach (var user in pageModelDto.Data)
                 {
-                    user.DeptName = depts.FirstOrDefault(x => x.ID == user.DeptId)?.FullName;
-                    var roleIds = string.IsNullOrWhiteSpace(user.RoleId)
+                    user.DeptName = depts.FirstOrDefault(x => x.Id == user.DeptId)?.FullName;
+                    var roleIds = string.IsNullOrWhiteSpace(user.RoleIds)
                         ? new List<long>()
-                        : user.RoleId.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x))
+                        : user.RoleIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => long.Parse(x))
                         ;
-                    user.RoleName = string.Join(',', roles.Where(x => roleIds.Contains(x.ID)).Select(x => x.Name));
+                    user.RoleNames = string.Join(',', roles.Where(x => roleIds.Contains(x.Id)).Select(x => x.Name));
                 }
             }
 
             return pageModelDto;
         }
 
-        public async Task<AppSrvResult> SetRole(RoleSetInputDto setDto)
+        public async Task<AppSrvResult> SetRoleAsync(long id, UserSetRoleDto input)
         {
-            var roleIdStr = setDto.RoleIds == null ? null : string.Join(",", setDto.RoleIds);
-            await _userRepository.UpdateAsync(new SysUser() { ID = setDto.ID, RoleId = roleIdStr }, x => x.RoleId);
+            var roleIdStr = input.RoleIds == null ? null : string.Join(",", input.RoleIds);
+            await _userRepository.UpdateAsync(new SysUser() { Id = id, RoleIds = roleIdStr }, UpdatingProps<SysUser>(x => x.RoleIds));
 
-            return DefaultResult();
+            return AppSrvResult();
         }
     }
 }

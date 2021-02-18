@@ -13,7 +13,7 @@ namespace Adnc.Usr.Core.Entities
 	/// </summary>
 	[Table("SysDept")]
 	[Description("部门")]
-	public class SysDept : EfAuditEntity
+	public class SysDept : EfFullAuditEntity
 	{
 		//private ICollection<SysUser> _users;
 		//private Action<object, string> LazyLoader { get; set; }
@@ -30,8 +30,8 @@ namespace Adnc.Usr.Core.Entities
 		[Column("FullName")]
 		public string FullName { get; set; }
 
-		[Column("Num")]
-		public int? Num { get; set; }
+		[Column("Ordinal")]
+		public int Ordinal { get; set; }
 
 		[Column("Pid")]
 		public long? Pid { get; set; }

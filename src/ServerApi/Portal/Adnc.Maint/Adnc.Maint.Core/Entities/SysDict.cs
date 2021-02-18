@@ -10,24 +10,19 @@ namespace Adnc.Maint.Core.Entities
     /// </summary>
     [Table("SysDict")]
     [Description("字典")]
-    public class SysDict : EfAuditEntity, ISoftDelete
+    public class SysDict : EfFullAuditEntity, ISoftDelete
     {
-        public override long ID { get; set; }
-
-        [StringLength(16)]
-        [Column("Name")]
+        [MaxLength(16)]
         public string Name { get; set; }
 
-        [StringLength(16)]
-        [Column("Num")]
-        public string Num { get; set; }
+        [Description("排序号")]
+        public int Ordinal { get; set; }
 
-        [Column("Pid")]
-        public long? Pid { get; set; }
+        [Description("父节点Id")]
+        public long Pid { get; set; }
 
-        [StringLength(64)]
-        [Column("Tips")]
-        public string Tips { get; set; }
+        [MaxLength(64)]
+        public string Value { get; set; }
 
         public bool IsDeleted { get; set; }
     }

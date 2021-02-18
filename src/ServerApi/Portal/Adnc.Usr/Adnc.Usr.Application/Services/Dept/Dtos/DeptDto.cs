@@ -9,7 +9,7 @@ namespace Adnc.Usr.Application.Dtos
 	/// 部门
 	/// </summary>
 	[Serializable]
-	public class DeptDto : BaseOutputDto
+	public class DeptDto : OutputDto<long>
 	{
 		/// <summary>
 		/// 部门全称
@@ -19,15 +19,15 @@ namespace Adnc.Usr.Application.Dtos
 		/// <summary>
 		/// 排序
 		/// </summary>
-		public int? Num { get; set; }
+		public int Ordinal { get; set; }
 
 		/// <summary>
-		/// 父级ID
+		/// 父级Id
 		/// </summary>
 		public long? Pid { get; set; }
 
 		/// <summary>
-		/// 父级ID集合
+		/// 父级Id集合
 		/// </summary>
 		public string Pids { get; set; }
 

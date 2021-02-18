@@ -12,7 +12,7 @@ namespace Adnc.Usr.Core.Entities
 	/// </summary>
 	[Table("SysMenu")]
 	[Description("菜单")]
-	public class SysMenu : EfAuditEntity
+	public class SysMenu : EfFullAuditEntity
 	{
 		/// <summary>
 		/// 编号
@@ -75,11 +75,11 @@ namespace Adnc.Usr.Core.Entities
 		public string Name { get; set; }
 
 		/// <summary>
-		/// 顺序
+		/// 序号
 		/// </summary>
-		[Description("顺序")]
-		[Column("Num")]
-		public int Num { get; set; }
+		[Description("序号")]
+		[Column("Ordinal")]
+		public int Ordinal { get; set; }
 
 		/// <summary>
 		/// 父菜单编号

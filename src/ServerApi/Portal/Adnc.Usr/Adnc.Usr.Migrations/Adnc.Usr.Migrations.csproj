@@ -2,7 +2,7 @@
 
   <PropertyGroup>
 	  <TargetFramework>netcoreapp3.1</TargetFramework>
-	  <Version>0.6.0</Version>
+	  <Version>0.7.0</Version>
 	  <Authors>Alpha.Yu</Authors>
 	  <Product>Adnc</Product>
 	  <RepositoryUrl>https://github.com/AlphaYu</RepositoryUrl>
@@ -20,6 +20,8 @@
     <Compile Remove="Migrations\20201124031130_20201124_1.Designer.cs" />
     <Compile Remove="Migrations\20201124031915_20201124_2.cs" />
     <Compile Remove="Migrations\20201124031915_20201124_2.Designer.cs" />
+    <Compile Remove="Migrations\20210208051844_2021020801.cs" />
+    <Compile Remove="Migrations\20210208051844_2021020801.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
